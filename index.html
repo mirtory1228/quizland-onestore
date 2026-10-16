@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="stylesheet" href="./style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1c" />
+  <meta name="description" content="영역을 칠해 타로 78장을 모으는 땅따먹기 캐주얼 게임. 오늘의 타로·100단계·랜덤 스킬. 한국어·영어." />
+  <title>타로 땅따먹기 · Tarot Land</title>
+</head>
+<body>
+<div class="hud">
+  <span class="badge hide" id="diffBadge">노말</span>
+  <div class="item pct"><span class="k" data-i18n="hud_pct">진행</span><span class="v" id="hPct">0%</span></div>
+  <div class="item tm"><span class="k" data-i18n="hud_time">시간</span><span class="v" id="hTime">0:00</span></div>
+  <div class="item"><span class="k" data-i18n="hud_life">목숨</span><span class="v" id="hLife">❤❤❤</span></div>
+  <div class="item"><span class="k" data-i18n="hud_score">점수</span><span class="v" id="hScore">0</span></div>
+</div>
+
+<div class="bars">
+  <div class="barrow"><span class="lab" data-i18n="bar_prog">진행</span><div class="bar prog"><i id="barProg"></i></div><span class="lab" style="width:24px" data-i18n="bar_skill">스킬</span><div class="bar gau"><i id="barGau"></i></div><span class="gift" id="gift">🎁</span></div>
+</div>
+
+<div class="stage">
+  <canvas id="game" width="400" height="440"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay scroll" id="startOv">
+    <button id="langBtn" style="position:absolute;top:10px;right:10px;font-size:11px;font-weight:800;padding:5px 11px;border-radius:14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);z-index:5;cursor:pointer">🌐 English</button>
+    <h1 data-i18n="home_h1">🃏 타로 <b>땅따먹기</b></h1>
+    <p data-i18n="home_desc">영역을 칠하면 <b>타로 카드</b>가 드러나요. 한 판 깨면 <b style="color:var(--gold)">랜덤 카드 1장</b>을 얻어 <b>78장 도감</b>에 모아요.<br>👻 적이 내 선에 닿으면 아웃! · 🎁 게이지가 차면 퀴즈로 스킬 획득</p>
+    <div class="diff" id="diffSel">
+      <button data-d="easy" data-i18n="btn_easy">이지</button>
+      <button data-d="normal" class="sel" data-i18n="btn_normal">노말</button>
+      <button data-d="hard" data-i18n="btn_hard">하드</button>
+    </div>
+    <div class="diffdesc" id="diffDesc"></div>
+    <div class="best" id="bestLine"></div>
+    <button class="btn" id="startBtn" data-i18n="btn_start">시작하기</button>
+    <div class="row"><button class="btn ghost" id="dailyBtn" data-i18n="btn_daily">🔮 오늘의 타로</button></div>
+    <div class="row"><button class="btn ghost" id="dexBtn" data-i18n="btn_dex">🃏 도감</button><button class="btn ghost" id="helpBtn" data-i18n="btn_help">❓ 게임 방법</button></div>
+  </div>
+
+  <div class="overlay scroll hide" id="dailyOv">
+    <h1 data-i18n="dl_h1">🔮 오늘의 <b>타로</b></h1>
+    <div class="tcard" id="dlCard"><div class="tc-num" id="dlNum"></div><div class="tc-emoji" id="dlEmoji"></div><div class="tc-name" id="dlName"></div></div>
+    <div class="tc-fortune" id="dlMean"></div>
+    <div class="tc-coll" id="dlAdd"></div>
+    <button class="btn ghost" id="dailyClose" data-i18n="btn_dailyclose">닫기</button>
+  </div>
+
+  <div class="overlay scroll hide" id="helpOv">
+    <h1 data-i18n="help_h1">❓ 게임 <b>방법</b></h1>
+    <div class="help" id="helpBody">
+      <div class="hsec" data-i18n="help_goal"></div>
+      <div class="hsec" data-i18n="help_ctrl"></div>
+      <div class="hsec" data-i18n="help_prog"></div>
+      <div class="hsec" data-i18n="help_combo"></div>
+      <div class="hsec" data-i18n="help_skill"></div>
+      <div class="hsec" data-i18n="help_enemy"></div>
+      <div class="hsec" data-i18n="help_eskill"></div>
+      <div class="hsec" data-i18n="help_stages"></div>
+    </div>
+    <button class="btn ghost" id="helpClose" data-i18n="btn_close">닫기</button>
+  </div>
+
+  <div class="overlay quiz scroll hide" id="quizOv">
+    <div class="card">
+      <span class="tag">🎁 박스 열기 · 상식 퀴즈</span>
+      <div class="q" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="fb" id="qFb"></div>
+    </div>
+  </div>
+
+  <div class="overlay hide" id="clearOv">
+    <h1 id="clearTitle">스테이지 <b>클리어!</b></h1>
+    <div class="tcard" id="tcard"><div class="tc-num" id="tcNum"></div><div class="tc-emoji" id="tcEmoji"></div><div class="tc-name" id="tcName"></div></div>
+    <div class="tc-fortune" id="tcFortune"></div>
+    <div class="tc-coll" id="tcColl"></div>
+    <div class="tc-cross" data-i18n="cross1">🔮 더 깊은 진짜 리딩은 운세바다에서</div>
+    <button class="btn gold" id="nextBtn">다음 판 →</button>
+  </div>
+
+  <div class="overlay scroll hide" id="dexOv">
+    <h1><span data-i18n="dex_h1">🃏 타로 도감</span> <span id="dexCount" style="font-size:15px;color:var(--gold)"></span></h1>
+    <p style="font-size:11.5px;margin-top:-4px" data-i18n="dex_sub">획득 카드(왼쪽)를 <b>눌러 정·역방향 뜻 보기</b> · 미획득은 뒷면</p>
+    <div class="dexgrid" id="dexGrid"></div>
+    <button class="btn ghost" id="dexClose" data-i18n="btn_close">닫기</button>
+  </div>
+
+  <div class="overlay scroll hide" id="cardOv">
+    <h1 id="cardTitle" style="font-size:16px;color:var(--gold)">카드</h1>
+    <div class="tcard" id="dcard"><div class="tc-num" id="dNum"></div><div class="tc-emoji" id="dEmoji"></div><div class="tc-name" id="dName"></div></div>
+    <div class="meaning up"><b data-i18n="up_label">정방향</b><span id="dUp"></span></div>
+    <div class="meaning rev"><b data-i18n="rev_label">역방향</b><span id="dRev"></span></div>
+    <div class="tc-cross" data-i18n="cross2">🔮 더 깊은 리딩은 운세바다에서</div>
+    <button class="btn ghost" id="cardClose" data-i18n="btn_cardback">← 도감으로</button>
+  </div>
+
+  <div class="overlay scroll hide" id="overOv">
+    <h1 data-i18n="over_h1">게임 <b style="color:var(--enemy)">오버</b></h1>
+    <p id="overMsg"></p>
+    <div class="board">
+      <div class="htxt" data-i18n="over_board">🏆 목표 랭킹</div>
+      <div id="board"></div>
+      <div class="note" id="rankNote"></div>
+    </div>
+    <button class="btn gold" id="reviveBtn" style="display:none" data-i18n="btn_revive">🎬 광고 보고 이어하기 (부활)</button>
+    <div class="row">
+      <button class="btn" id="retryBtn" data-i18n="btn_retry">다시 하기</button>
+      <button class="btn ghost" id="homeBtn" data-i18n="btn_home">난이도 선택</button>
+    </div>
+  </div>
+</div>
+
+<div class="hint" data-i18n="joy_hint"><b>아래 칸을 눌러 조준</b>(어디든) 또는 게임화면을 밀어 이동 · 떼면 멈춤</div>
+<div class="controls">
+  <div class="joyzone" id="joyzone">
+    <span class="joyhint" id="joyHint" data-i18n="joy_press">🕹️ 눌러서 조준</span>
+    <div class="joybase" id="joyBase"><div class="joystick" id="joyStick"></div></div>
+  </div>
+  <button class="skillbox empty" id="skillBox"><span class="bx" id="skillBx">🎁</span><span class="lbl" data-i18n="skill_lbl">랜덤 스킬</span><span class="ct" id="skillCt">0</span></button>
+</div>
+<script type="module" src="./onestore.js"></script>
+</body>
+</html>
