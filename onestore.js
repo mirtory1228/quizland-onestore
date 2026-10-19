@@ -3,8 +3,8 @@
 import { createSDK } from 'https://h5sdk.onestore.net/lib/v1.1.0/onestore-h5-sdk.min.js';
 
 // ── ONEconsole에서 광고 지면(placement)을 발급받은 뒤 채우기. 비어 있으면 광고 없이 동작(부활은 바로 지급) ──
-const PLACEMENT_REWARDED = '';      // 리워드(광고 보고 이어하기)
-const PLACEMENT_INTERSTITIAL = '';  // 전면(3스테이지마다)
+const PLACEMENT_REWARDED = 'xREL8-LDAK-NDZF-AGHF';      // 리워드(광고 보고 이어하기)
+const PLACEMENT_INTERSTITIAL = 'xCKD7-GTCZ-QY2D-ERXY';  // 전면(3스테이지마다)
 
 const sdk = createSDK();
 let inStore = false;
