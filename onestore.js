@@ -9,6 +9,8 @@ const PLACEMENT_INTERSTITIAL = 'xCKD7-GTCZ-QY2D-ERXY';  // 전면(3스테이지�
 const sdk = createSDK();
 let inStore = false;
 const QL = () => window.QL;
+const DEBUG_AD = /[?&]adtest=1/.test(location.search);
+const dbg = (m) => { try { console.log('[AD]', m); if (DEBUG_AD) { const el = document.getElementById('toast'); if (el) { el.textContent = '[AD] ' + m; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 4500); } } } catch (_) {} };
 const rid = () => 'r-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
 sdk.on('pause', () => QL() && QL().set('sdk', true));
@@ -18,23 +20,27 @@ sdk.on('resume', () => QL() && QL().set('sdk', false));
 window.AIT = {
   // 스테이지 사이 전면 광고. 노출 동안 게임은 멈춘다.
   interstitial() {
-    if (!inStore || !PLACEMENT_INTERSTITIAL || !sdk.ads.isSupported('interstitial')) return;
+    if (!inStore) { dbg('interstitial skip: not in ONE store app'); return; }
+    if (!PLACEMENT_INTERSTITIAL || !sdk.ads.isSupported('interstitial')) { dbg('interstitial skip: unsupported'); return; }
     QL().set('ad', true);
-    sdk.ads.showInterstitialAsync({ placementId: PLACEMENT_INTERSTITIAL }).catch(() => {}).finally(() => QL().set('ad', false));
+    dbg('interstitial request');
+    sdk.ads.showInterstitialAsync({ placementId: PLACEMENT_INTERSTITIAL }).then((r) => dbg('interstitial: ' + JSON.stringify(r))).catch((e) => dbg('interstitial error: ' + (e && (e.reason || e.message)))).finally(() => QL().set('ad', false));
   },
   // 광고 보고 이어하기. 'rewarded'일 때만 부활. 지면 미설정/미지원이면 광고 없이 바로 부활(기능은 항상 동작).
   rewardedRevive(grant) {
-    if (!inStore || !PLACEMENT_REWARDED || !sdk.ads.isSupported('rewarded')) { grant(); return; }
+    if (!inStore || !PLACEMENT_REWARDED || !sdk.ads.isSupported('rewarded')) { dbg('rewarded skip(inStore=' + inStore + ')'); grant(); return; }
+    dbg('rewarded request');
     sdk.ads.showRewardedAsync({ placementId: PLACEMENT_REWARDED, requestId: rid() })
-      .then((r) => { if (r && r.status === 'rewarded') grant(); })
-      .catch(() => {});
+      .then((r) => { dbg('rewarded: ' + JSON.stringify(r)); if (r && r.status === 'rewarded') grant(); })
+      .catch((e) => dbg('rewarded error: ' + (e && (e.reason || e.message))));
   },
 };
 
 try {
   const init = await sdk.initializeAsync();   // 일반 브라우저에서는 err가 들어와 inStore=false
   inStore = !!init && !init.err;
-} catch (_) { inStore = false; }
+  dbg('init inStore=' + inStore + ' ' + JSON.stringify(init || {}).slice(0, 120));
+} catch (e) { inStore = false; dbg('init failed: ' + (e && (e.reason || e.message))); }
 
 if (inStore) sdk.setLoadingProgress(30);
 await import('./game.js');
